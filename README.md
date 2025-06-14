@@ -73,5 +73,3 @@ Mock-реализации (`MockCategoriesService`, `MockBankAccountService`, `M
   * `static func parseCSV(_ csv: String) -> [Transaction]` — парсинг CSV-текста в массив моделей.
 
 ---
-
-Все задания выполнены и протестированы локально.
