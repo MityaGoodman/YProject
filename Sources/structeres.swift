@@ -267,7 +267,7 @@ extension Transaction {
             let createdAt = dateFormatter.date(from: fields[6]),
             let updatedAt = dateFormatter.date(from: fields[7])
         else
-        {
+        {   
             return nil
         }
         self.id = id
@@ -293,3 +293,4 @@ extension Transaction {
             }
         }
 }
+
