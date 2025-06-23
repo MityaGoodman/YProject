@@ -1,5 +1,5 @@
 //
-//  TabView.swift
+//  MyTabView.swift
 //  YProject
 //
 //  Created by Митя on 21.06.2025.
@@ -7,17 +7,22 @@
 
 import SwiftUI
 
-struct TabView: View {
+struct MyTabView: View {
     var body: some View {
         TabView {
-            Text("Расходы")
+            NavigationStack {
+                TransactionsListView(direction: .outcome)
+                
+            }
                 .tabItem {
-                    Image(systemName: "minus.circle.fill")
+                    Image(systemName: "chart.line.uptrend.xyaxis")
                     Text("Расходы")
                 }
-            Text("Доходы")
+            NavigationStack {
+                TransactionsListView(direction: .income)
+            }
                 .tabItem {
-                    Image(systemName: "plus.circle.fill")
+                    Image(systemName: "chart.line.downtrend.xyaxis")
                     Text("Доходы")
                 }
             Text("Счет")
@@ -36,6 +41,12 @@ struct TabView: View {
                     Text("Настройки")
                 }
         }
-        .accentColor(Color("AccentColor"))
+        .accentColor(Color("Color"))
+    }
+}
+
+struct MyTabView_Previews: PreviewProvider {
+    static var previews: some View {
+        MyTabView()
     }
 }

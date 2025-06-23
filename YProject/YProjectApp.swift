@@ -11,7 +11,10 @@ import SwiftUI
 struct YProjectApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MyTabView()
+            //ContentView()
+            //    .accentColor(Color("Color"))
         }
     }
 }
+
