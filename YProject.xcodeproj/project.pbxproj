@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		4DAA152C2E062C8A00BBFF66 /* structeres.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DAA152B2E062C8A00BBFF66 /* structeres.swift */; };
+		4DAA15422E063A5A00BBFF66 /* structeres.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DAA15402E063A5A00BBFF66 /* structeres.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -31,7 +31,7 @@
 		4DAA14FE2E062C7200BBFF66 /* YProject.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YProject.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4DAA150E2E062C7300BBFF66 /* YProjectTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = YProjectTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		4DAA15182E062C7300BBFF66 /* YProjectUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = YProjectUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		4DAA152B2E062C8A00BBFF66 /* structeres.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = structeres.swift; sourceTree = "<group>"; };
+		4DAA15402E063A5A00BBFF66 /* structeres.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = structeres.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -48,6 +48,11 @@
 		4DAA151B2E062C7300BBFF66 /* YProjectUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = YProjectUITests;
+			sourceTree = "<group>";
+		};
+		4DAA15462E06460F00BBFF66 /* ViewModels */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ViewModels;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -80,7 +85,8 @@
 		4DAA14F52E062C7200BBFF66 = {
 			isa = PBXGroup;
 			children = (
-				4DAA152B2E062C8A00BBFF66 /* structeres.swift */,
+				4DAA15462E06460F00BBFF66 /* ViewModels */,
+				4DAA15412E063A5A00BBFF66 /* Sources */,
 				4DAA15002E062C7200BBFF66 /* YProject */,
 				4DAA15112E062C7300BBFF66 /* YProjectTests */,
 				4DAA151B2E062C7300BBFF66 /* YProjectUITests */,
@@ -96,6 +102,14 @@
 				4DAA15182E062C7300BBFF66 /* YProjectUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		4DAA15412E063A5A00BBFF66 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				4DAA15402E063A5A00BBFF66 /* structeres.swift */,
+			);
+			path = Sources;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -115,6 +129,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				4DAA15002E062C7200BBFF66 /* YProject */,
+				4DAA15462E06460F00BBFF66 /* ViewModels */,
 			);
 			name = YProject;
 			packageProductDependencies = (
@@ -242,7 +257,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4DAA152C2E062C8A00BBFF66 /* structeres.swift in Sources */,
+				4DAA15422E063A5A00BBFF66 /* structeres.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
