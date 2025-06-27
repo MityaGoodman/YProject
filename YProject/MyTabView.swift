@@ -25,7 +25,9 @@ struct MyTabView: View {
                     Image(systemName: "chart.line.downtrend.xyaxis")
                     Text("Доходы")
                 }
-            Text("Счет")
+            NavigationStack {
+                BalanceSheet()
+            }
                 .tabItem {
                     Image(systemName: "banknote.fill")
                     Text("Счет")
