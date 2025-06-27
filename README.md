@@ -1,75 +1,32 @@
-# YProject
+## Экран «Мой счет» (SwiftUI)
 
-## Описание проекта
-
-В рамках домашнего задания реализовал следующее:
-
-### 1. Доменные модели
-
-* **Category**
-
-  * Поля соответствуют JSON-объекту из ответа бэкенда для списка категорий.
-  * Направление операции определяется через `enum Direction { income, outcome }`.
-  * Иконка хранится в поле `emoji` типа `Character` (эмоджи).
-
-* **BankAccount**
-
-  * Поля соответствуют JSON-объекту из ответа бэкенда для списка банковских счетов.
-  * Поле `balance` имеет тип `Decimal`.
-
-* **Transaction**
-
-  * Поля соответствуют JSON-объекту из ответа бэкенда для списка операций.
-  * Поле `amount` имеет тип `Decimal`.
-  * Поле `transactionDate` представлено типом `Date`.
-
-### 2. Сериализация и десериализация
-
-Для `Transaction` реализовано расширение:
-
-* `static func parse(jsonObject: Any) -> Transaction?` — парсит Foundation-объект (`[String:Any]`, `String`, `NSNumber` и т.д.) в модель `Transaction`.
-* `var jsonObject: Any` — возвращает словарь `[String:Any]`, готовый для `JSONSerialization`, для обратного преобразования в JSON.
-
-### 3. TransactionsFileCache
-
-Класс `TransactionsFileCache` обеспечивает хранение операций в локальном JSON-файле:
-
-* Приватный `Set<Transaction>` для хранения, гарантирующий уникальность по `id`.
-* `init(fileURL: URL)` — инициализация с указанием файла, загрузка существующих данных.
-* `loadFromFile()` — чтение и парсинг массива операций из JSON-файла.
-* `saveToFile()` — сохранение текущего списка операций в JSON-файл.
-* `add(_:)` — добавление новой операции и автоматическое сохранение.
-* `remove(id:)` — удаление операции по `id` и автоматическое сохранение.
-* Поддержка нескольких файлов через разные экземпляры с разными `fileURL`.
-
-### 4. Моки сервисов
-
-Интерфейсы (протоколы) и их mock-реализации для быстрого тестирования и UI-прототипирования:
-
-* **CategoriesService**
-
-  * `func fetchAll() async -> [Category]`
-  * `func fetch(by isIncome: Direction) async -> [Category]`
-
-* **BankAccountsService**
-
-  * `func fetchPrimaryAccount() async -> BankAccount?`
-  * `func updateBalance(_ account: BankAccount, to newBalance: Decimal) async`
-
-* **TransactionsService**
-
-  * `func fetch(from: Date, to: Date) async -> [Transaction]`
-  * `func create(_ transaction: Transaction) async`
-  * `func update(_ transaction: Transaction) async`
-  * `func delete(id: Int) async`
-
-Mock-реализации (`MockCategoriesService`, `MockBankAccountService`, `MockTransactionsService`) используют в качестве источника данных локальные модели и `TransactionsFileCache`.
-
-### 5. CSV-парсер
-
-* Реализовано расширение `Transaction`:
-
-  * `init?(csvFields: [String], dateFormatter: ISO8601DateFormatter)` — инициализатор из массива полей CSV.
-  * `static func parseCSV(_ csv: String) -> [Transaction]` — парсинг CSV-текста в массив моделей.
+### Общие требования
+1. Добавить в TabBar новый раздел **«Счет»** (см. макет в Figma: https://www.figma.com/…).
+2. На экране **«Мой счет»** вывести:
+   - Строку с текущим **балансом**.
+   - Строку с выбранной **валютой**.
+3. График не реализовывать.
+4. В навбаре добавить кнопку **«Редактировать»**:
+   - По нажатию — перейти в режим редактирования.
+5. В режиме редактирования:
+   - По тапу на ячейку с валютой — показать попап со списком валют (макет: https://www.figma.com/…).
+     - При выборе новой валюты — обновить экран.
+     - При выборе текущей валюты — не выполнять никаких действий.
+   - По тапу на ячейку с балансом — отобразить цифровую клавиатуру.
+     - Клавиатура скрывается свайпом по экрану.
+   - Кнопка **«Сохранить»** (макет: https://www.figma.com/…) возвращает экран в обычный режим.
 
 ---
+
+### Задание ★ (pull-to-refresh)
+- Добавить **Pull to Refresh** на экране **«Мой счет»**.
+- При обновлении (потягивании вниз) прокинуть в ViewModel действие загрузки новых данных.
+
+---
+
+### Задания ★★ (дополнительно)
+- **Скрывать/показывать баланс** при тряске устройства:
+  - Эффект анимированного «спойлера» (аналогично Telegram).
+- **Вставка из буфера**:
+  - Разрешить вставку значения баланса из clipboard.
+  - Отфильтровывать невалидные символы (не цифры, точки и т. п.).
