@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		4DAA15422E063A5A00BBFF66 /* structeres.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DAA15402E063A5A00BBFF66 /* structeres.swift */; };
+		4DAA156D2E0DAA9D00BBFF66 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 4DAA156C2E0DAA9000BBFF66 /* .gitignore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -32,6 +33,7 @@
 		4DAA150E2E062C7300BBFF66 /* YProjectTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = YProjectTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		4DAA15182E062C7300BBFF66 /* YProjectUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = YProjectUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		4DAA15402E063A5A00BBFF66 /* structeres.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = structeres.swift; sourceTree = "<group>"; };
+		4DAA156C2E0DAA9000BBFF66 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -85,6 +87,7 @@
 		4DAA14F52E062C7200BBFF66 = {
 			isa = PBXGroup;
 			children = (
+				4DAA156C2E0DAA9000BBFF66 /* .gitignore */,
 				4DAA15462E06460F00BBFF66 /* ViewModels */,
 				4DAA15412E063A5A00BBFF66 /* Sources */,
 				4DAA15002E062C7200BBFF66 /* YProject */,
@@ -233,6 +236,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4DAA156D2E0DAA9D00BBFF66 /* .gitignore in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
