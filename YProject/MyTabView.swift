@@ -32,7 +32,9 @@ struct MyTabView: View {
                     Image(systemName: "banknote.fill")
                     Text("Счет")
                 }
-            Text("Статьи")
+            NavigationStack {
+                ArticlesView()
+            }
                 .tabItem {
                     Image(systemName: "list.bullet")
                     Text("Статьи")
