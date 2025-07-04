@@ -33,6 +33,10 @@ final class TransactionsListViewModel: ObservableObject {
         transactions = filtered
     }
     
+    func create(_ tx: Transaction) async {
+        await service.create(tx)
+    }
+    
     var total: Decimal {
         transactions.reduce(0) { $0 + $1.amount }
     }

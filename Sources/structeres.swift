@@ -7,7 +7,7 @@ enum Direction {
 }
 
 
-struct Category {
+struct Category: Hashable {
     let id: Int
     let name: String
     let emoji: Character
@@ -19,6 +19,13 @@ struct Category {
         let isIncomeBool = dict["isIncome"] as? Bool ?? false
         isIncome = isIncomeBool ? .income : .outcome
     }
+    
+    init(id: Int, name: String, emoji: Character, isIncome: Direction) {
+            self.id = id
+            self.name = name
+            self.emoji = emoji
+            self.isIncome = isIncome
+        }
 }
 
 

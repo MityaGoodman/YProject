@@ -10,6 +10,7 @@ import SwiftUI
 struct TransactionsListView: View {
     let direction: Direction
     @StateObject private var vm: TransactionsListViewModel
+    @State private var isPresentingNew = false
     
     init(
         direction: Direction,
@@ -27,45 +28,70 @@ struct TransactionsListView: View {
     }
     
     var body: some View {
-        VStack(spacing: 0) {
-            HStack {
-                Text("Всего")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                Spacer()
-                Text(
-                    vm.total as NSNumber,
-                    formatter: currencyFormatter(code: vm.currencyCode)
+        ZStack(alignment: .bottomTrailing) {
+            VStack(spacing: 0) {
+                HStack {
+                    Text("Всего")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    Text(
+                        vm.total as NSNumber,
+                        formatter: currencyFormatter(code: vm.currencyCode)
+                    )
+                    .font(.headline)
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(UIColor.secondarySystemBackground))
                 )
-                .font(.headline)
+                .padding(.horizontal)
+                .padding(.top)
+                
+                List(vm.transactions, id: \.id) { tx in
+                    TransactionRow(transaction: tx)
+                }
+                .listStyle(.plain)
             }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(UIColor.secondarySystemBackground))
-            )
-            .padding(.horizontal)
-            .padding(.top)
-
-            List(vm.transactions, id: \.id) { tx in
-                TransactionRow(transaction: tx)
+            
+            Button {
+                isPresentingNew = true
+            } label: {
+                Image(systemName: "plus")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding()
+                    .background(Color.accentColor)
+                    .clipShape(Circle())
+                    .shadow(radius: 4)
             }
-            .listStyle(.plain)
+            .padding(.trailing, 24)
+            .padding(.bottom, 24)
         }
         .navigationTitle(direction == .income
                          ? "Доходы сегодня"
                          : "Расходы сегодня")
         .toolbar {
-          ToolbarItem(placement: .navigationBarTrailing) {
-            NavigationLink {
-              HistoryView(direction: direction)
-            } label: {
-              Image(systemName: "clock")
+            ToolbarItem(placement: .navigationBarTrailing) {
+                NavigationLink {
+                    HistoryView(direction: direction)
+                } label: {
+                    Image(systemName: "clock")
+                }
             }
-          }
         }
         .task {
             await vm.loadToday(direction: direction)
+        }
+        .sheet(isPresented: $isPresentingNew) {
+            CreateTransactionView(direction: direction) { newTx in
+                Task {
+                    await vm.create(newTx)
+                    await vm.loadToday(direction: direction)
+                }
+                isPresentingNew = false
+            }
         }
     }
     
