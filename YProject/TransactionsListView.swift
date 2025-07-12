@@ -11,21 +11,25 @@ struct TransactionsListView: View {
     let direction: Direction
     @StateObject private var vm: TransactionsListViewModel
     @State private var isPresentingNew = false
+    @State private var editingTx: Transaction? = nil
     
     init(
         direction: Direction,
-        service: TransactionsService = MockTransactionsService(
-            cache: TransactionsFileCache(
-                fileURL: FileManager.default
-                    .urls(for: .documentDirectory, in: .userDomainMask)
-                    .first!
-                    .appendingPathComponent("transactions.json")
-            )
-        )
+        service: TransactionsService,
+        balanceManager: BalanceManager,
+        categoriesService: CategoriesService,
+        bankAccountsService: BankAccountsService
     ) {
         self.direction = direction
-        _vm = StateObject(wrappedValue: TransactionsListViewModel(service: service))
+        _vm = StateObject(wrappedValue: TransactionsListViewModel(
+            service: service,
+            balanceManager: balanceManager,
+            categoriesService: categoriesService
+        ))
+        self.bankAccountsService = bankAccountsService
     }
+    
+    private let bankAccountsService: BankAccountsService
     
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
@@ -49,10 +53,21 @@ struct TransactionsListView: View {
                 .padding(.horizontal)
                 .padding(.top)
                 
-                List(vm.transactions, id: \.id) { tx in
-                    TransactionRow(transaction: tx)
+                if vm.isLoading {
+                    Spacer()
+                    ProgressView("Загрузка...")
+                        .progressViewStyle(CircularProgressViewStyle())
+                    Spacer()
+                } else {
+                    List(vm.transactions, id: \.id) { tx in
+                        TransactionRow(transaction: tx)
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                editingTx = tx
+                            }
+                    }
+                    .listStyle(.plain)
                 }
-                .listStyle(.plain)
             }
             
             Button {
@@ -75,7 +90,7 @@ struct TransactionsListView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 NavigationLink {
-                    HistoryView(direction: direction)
+                    HistoryView(direction: direction, service: vm.service)
                 } label: {
                     Image(systemName: "clock")
                 }
@@ -84,13 +99,57 @@ struct TransactionsListView: View {
         .task {
             await vm.loadToday(direction: direction)
         }
-        .sheet(isPresented: $isPresentingNew) {
-            CreateTransactionView(direction: direction) { newTx in
-                Task {
-                    await vm.create(newTx)
-                    await vm.loadToday(direction: direction)
+        .alert("Ошибка", isPresented: Binding<Bool>(
+            get: { vm.errorMessage != nil },
+            set: { if !$0 { vm.errorMessage = nil } }
+        )) {
+            Button("OK") {
+                vm.errorMessage = nil
+            }
+        } message: {
+            if let errorMessage = vm.errorMessage {
+                Text(errorMessage)
+            }
+        }
+
+        .sheet(isPresented: Binding<Bool>(
+            get: { isPresentingNew || editingTx != nil },
+            set: { newValue in
+                if !newValue {
+                    isPresentingNew = false
+                    editingTx = nil
                 }
-                isPresentingNew = false
+            }
+        )) {
+            if isPresentingNew {
+                CreateTransactionView(
+                    direction: direction,
+                    service: vm.categoriesService,
+                    balanceManager: vm.balanceManager,
+                    bankAccountsService: bankAccountsService
+                ) { newTx in
+                    Task {
+                        await vm.create(newTx, direction: direction)
+                        isPresentingNew = false
+                    }
+                }
+            } else if let tx = editingTx {
+                EditTransactionView(
+                    transaction: tx,
+                    direction: direction,
+                    onSave: { updatedTx in
+                        Task {
+                            await vm.update(updatedTx, direction: direction)
+                            editingTx = nil
+                        }
+                    },
+                    onDelete: { toDelete in
+                        Task {
+                            await vm.delete(toDelete.id, direction: direction)
+                            editingTx = nil
+                        }
+                    }
+                )
             }
         }
     }

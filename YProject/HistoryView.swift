@@ -5,29 +5,26 @@
 //  Created by Митя on 21.06.2025.
 //
 
+
+
+
 import SwiftUI
 
 struct HistoryView: View {
     let direction: Direction
     @StateObject private var vm: HistoryViewModel
+    @State private var showAnalysis = false
     
     init(
-      direction: Direction,
-      service: TransactionsService = MockTransactionsService(
-        cache: TransactionsFileCache(
-          fileURL: FileManager.default
-            .urls(for: .documentDirectory, in: .userDomainMask)
-            .first!
-            .appendingPathComponent("transactions.json")
-        )
-      )
+        direction: Direction,
+        service: TransactionsService
     ) {
         self.direction = direction
         _vm = StateObject(
-          wrappedValue: HistoryViewModel(
-            direction: direction,
-            service: service
-          )
+            wrappedValue: HistoryViewModel(
+                direction: direction,
+                service: service
+            )
         )
     }
     
@@ -61,25 +58,58 @@ struct HistoryView: View {
                 Text("Сумма")
                 Spacer()
                 Text(
-                  vm.total as NSNumber,
-                  formatter: currencyFormatter(code: vm.currencyCode)
+                    vm.total as NSNumber,
+                    formatter: currencyFormatter(code: vm.currencyCode)
                 )
             }
             .padding()
             .background(
-              RoundedRectangle(cornerRadius: 12)
-                .fill(Color(UIColor.secondarySystemBackground))
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(UIColor.secondarySystemBackground))
             )
             .padding(.horizontal)
             
-            List(vm.transactions, id: \.id) { tx in
-                TransactionRow(transaction: tx)
+            if vm.isLoading {
+                Spacer()
+                ProgressView("Загрузка истории...")
+                    .progressViewStyle(CircularProgressViewStyle())
+                Spacer()
+            } else {
+                List(vm.transactions, id: \.id) { tx in
+                    TransactionRow(transaction: tx)
+                }
+                .listStyle(.plain)
             }
-            .listStyle(.plain)
         }
         .navigationTitle("Моя история")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                NavigationLink {
+                    AnalysisViewControllerWrapper(
+                        start: vm.start,
+                        end: vm.end,
+                        transactions: vm.transactions
+                    )
+                } label: {
+                    Image(systemName: "doc.plaintext")
+                }
+            }
+        }
         .onChange(of: vm.start) { _ in Task { await vm.refresh() } }
         .onChange(of: vm.end)   { _ in Task { await vm.refresh() } }
+        .alert("Ошибка", isPresented: Binding<Bool>(
+            get: { vm.errorMessage != nil },
+            set: { if !$0 { vm.errorMessage = nil } }
+        )) {
+            Button("OK") {
+                vm.errorMessage = nil
+            }
+        } message: {
+            if let errorMessage = vm.errorMessage {
+                Text(errorMessage)
+            }
+        }
+
     }
     
     private func currencyFormatter(code: String) -> NumberFormatter {

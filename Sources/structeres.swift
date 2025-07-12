@@ -12,6 +12,14 @@ struct Category: Hashable {
     let name: String
     let emoji: Character
     let isIncome: Direction
+    
+    init(id: Int, name: String, emoji: Character, isIncome: Direction) {
+        self.id = id
+        self.name = name
+        self.emoji = emoji
+        self.isIncome = isIncome
+    }
+    
     init (dict: [String: Any]) {
         id = dict["id"] as? Int ?? 0
         name = dict["name"] as? String ?? ""
@@ -19,13 +27,6 @@ struct Category: Hashable {
         let isIncomeBool = dict["isIncome"] as? Bool ?? false
         isIncome = isIncomeBool ? .income : .outcome
     }
-    
-    init(id: Int, name: String, emoji: Character, isIncome: Direction) {
-            self.id = id
-            self.name = name
-            self.emoji = emoji
-            self.isIncome = isIncome
-        }
 }
 
 
@@ -37,6 +38,17 @@ struct BankAccount {
     var currency: String
     let createdAt: Date
     var updatedAt: Date
+    
+    init(id: Int, userId: Int, name: String, balance: Decimal, currency: String, createdAt: Date, updatedAt: Date) {
+        self.id = id
+        self.userId = userId
+        self.name = name
+        self.balance = balance
+        self.currency = currency
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+    }
+    
     init (dict: [String: Any]) {
         id = dict["id"] as? Int ?? 0
         userId = dict["userId"] as? Int ?? 0
@@ -55,9 +67,9 @@ struct BankAccount {
 struct Transaction {
     var id: Int
     let account: BankAccount
-    let category: Category
+    var category: Category
     var amount: Decimal
-    let transactionDate: Date
+    var transactionDate: Date
     var comment: String
     let createdAt: Date
     var updatedAt: Date
@@ -196,13 +208,14 @@ protocol CategoriesService {
 protocol BankAccountsService {
   func fetchPrimaryAccount() async -> BankAccount?
   func updateBalance(_ account: BankAccount, to newBalance: Decimal) async
+  func updateAccount(_ account: BankAccount, balance: Decimal, currency: String) async
 }
 
 protocol TransactionsService {
-  func fetch(from: Date, to: Date) async -> [Transaction]
-  func create(_ transaction: Transaction) async
-  func update(_ transaction: Transaction) async
-  func delete(id: Int) async
+  func fetch(from: Date, to: Date) async throws -> [Transaction]
+  func create(_ transaction: Transaction) async throws
+  func update(_ transaction: Transaction) async throws
+  func delete(id: Int) async throws
 }
 
 final class MockCategoriesService: CategoriesService {
@@ -235,6 +248,11 @@ final class MockBankAccountService: BankAccountsService {
     func updateBalance(_ account: BankAccount, to newBalance: Decimal) async {
         self.account?.balance = newBalance
     }
+    
+    func updateAccount(_ account: BankAccount, balance: Decimal, currency: String) async {
+        self.account?.balance = balance
+        self.account?.currency = currency
+    }
 }
 
 final class MockTransactionsService: TransactionsService {
@@ -244,20 +262,20 @@ final class MockTransactionsService: TransactionsService {
         self.cache = cache
     }
     
-    func fetch(from: Date, to: Date) async -> [Transaction] {
+    func fetch(from: Date, to: Date) async throws -> [Transaction] {
         return cache.transactions.filter {$0.transactionDate >= from && $0.transactionDate <= to }
     }
     
-    func create(_ transaction: Transaction) async {
+    func create(_ transaction: Transaction) async throws {
         cache.add(transaction)
     }
     
-    func update(_ transaction: Transaction) async {
+    func update(_ transaction: Transaction) async throws {
         cache.remove(id: transaction.id)
         cache.add(transaction)
     }
     
-    func delete(id: Int) async {
+    func delete(id: Int) async throws {
         cache.remove(id: id)
     }
 }
@@ -301,3 +319,4 @@ extension Transaction {
         }
 }
 
+extension Transaction: Identifiable {}

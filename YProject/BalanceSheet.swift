@@ -10,21 +10,13 @@ import SwiftUI
 
 
 struct BalanceSheet: View {
-    @State private var balanceText = "-670 000"
-    @State private var currency: String = "₽"
+    @StateObject private var vm: BalanceViewModel
+    
+    init(balanceManager: BalanceManager) {
+        _vm = StateObject(wrappedValue: BalanceViewModel(balanceManager: balanceManager))
+    }
     @State private var isShowingCurrencyMenu = false
     @State private var isEditing = false
-    @State private var service = MockBankAccountService(account:
-                                                            BankAccount(dict: [
-                                                                "id": 0,
-                                                                "userId": 0,
-                                                                "name": "Основной счёт",
-                                                                "balance": "670000",
-                                                                "currency": "₽",
-                                                                "createdAt": ISO8601DateFormatter().string(from: Date()),
-                                                                "updatedAt": ISO8601DateFormatter().string(from: Date())
-                                                            ])
-    )
     @StateObject private var shake = ShakeDetector()
     @State private var isHidden = false
     
@@ -39,7 +31,7 @@ struct BalanceSheet: View {
                                     .fill(Color.secondary.opacity(0.3))
                                     .frame(height: 20)
                             } else {
-                                TextField("0", text: $balanceText)
+                                TextField("0", text: $vm.balanceText)
                                     .keyboardType(.decimalPad)
                                     .multilineTextAlignment(.trailing)
                                     .font(.body.weight(.semibold))
@@ -59,7 +51,7 @@ struct BalanceSheet: View {
                                 Text("Валюта")
                                     .font(.body.weight(.medium))
                                 Spacer()
-                                Text(currency)
+                                Text(vm.currency)
                                     .font(.body.weight(.semibold))
                                     .foregroundColor(.primary)
                                 Image(systemName: "chevron.right")
@@ -69,9 +61,9 @@ struct BalanceSheet: View {
                         }
                         .buttonStyle(.plain)
                         .confirmationDialog("Валюта", isPresented: $isShowingCurrencyMenu) {
-                            Button("Российский рубль ₽") { currency = "₽" }
-                            Button("Американский доллар $") { currency = "$" }
-                            Button("Евро €")            { currency = "€" }
+                            Button("Российский рубль ₽") { vm.currency = "₽" }
+                            Button("Американский доллар $") { vm.currency = "$" }
+                            Button("Евро €")            { vm.currency = "€" }
                             Button("Отмена", role: .cancel) { }
                         }
                         .padding(.vertical, 4)
@@ -79,33 +71,41 @@ struct BalanceSheet: View {
                 }
             }
             else {
-                Form {
-                    Section {
-                        LabeledContent {
-                            if isHidden {
-                                RoundedRectangle(cornerRadius: 4)
-                                    .fill(Color.secondary.opacity(0.3))
-                                    .frame(height: 20)
-                            } else {
-                                Text(balanceText)
-                                    .font(.body.weight(.semibold))
+                if vm.isLoading {
+                    VStack {
+                        Spacer()
+                        ProgressView("Загрузка баланса...")
+                            .progressViewStyle(CircularProgressViewStyle())
+                        Spacer()
+                    }
+                } else {
+                    Form {
+                        Section {
+                            LabeledContent {
+                                if isHidden {
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .fill(Color.secondary.opacity(0.3))
+                                        .frame(height: 20)
+                                } else {
+                                    Text(vm.balanceText)
+                                        .font(.body.weight(.semibold))
+                                }
+                            } label: {
+                                Label("💰 Баланс", systemImage: "f")
+                                    .font(.body.weight(.medium))
+                                    .labelStyle(.titleOnly)
                             }
-                        } label: {
-                            Label("💰 Баланс", systemImage: "f")
-                                .font(.body.weight(.medium))
-                                .labelStyle(.titleOnly)
                         }
-                    }
-                    .padding(.vertical, 4)
-                    Section {
-                        LabeledContent {
-                            Text(currency)
-                        } label: {
-                            Text("Валюта")
+                        .padding(.vertical, 4)
+                        Section {
+                            LabeledContent {
+                                Text(vm.currency)
+                            } label: {
+                                Text("Валюта")
+                            }
                         }
+                        .padding(.vertical, 4)
                     }
-                    .padding(.vertical, 4)
-                    
                 }
             }
         }
@@ -114,35 +114,45 @@ struct BalanceSheet: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(isEditing ? "Сохранить" : "Редактировать") {
+                    if isEditing {
+                        Task {
+                            await vm.saveChanges()
+                        }
+                    }
                     withAnimation {
                         isEditing.toggle()
                     }
                 }
             }
         }
-        .refreshable { //первая звездочка
-            await reload()
+        .refreshable {
+            await vm.load()
         }
         .task {
-            await reload()
+            await vm.load()
         }
+        .alert("Ошибка", isPresented: Binding<Bool>(
+            get: { vm.errorMessage != nil },
+            set: { if !$0 { vm.errorMessage = nil } }
+        )) {
+            Button("OK") {
+                vm.errorMessage = nil
+            }
+        } message: {
+            if let errorMessage = vm.errorMessage {
+                Text(errorMessage)
+            }
+        }
+
         .onReceive(shake.$didShake) { didShake in // вторая звездочка + ShakeDetector
             if didShake {
                 withAnimation(.easeInOut) { isHidden.toggle() }
             }
             
         }
-    }
-        private func reload() async {
-            guard let acct = await service.fetchPrimaryAccount() else { return }
-            let formatter = NumberFormatter()
-            formatter.groupingSeparator = " "
-            formatter.numberStyle = .decimal
-            formatter.maximumFractionDigits = 0
-            let amt = formatter.string(from: acct.balance as NSNumber) ?? "\(acct.balance)"
-            balanceText = amt
-            currency    = acct.currency
-        }
+            }
     }
     
     
+
+
