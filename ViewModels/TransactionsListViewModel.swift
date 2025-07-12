@@ -27,14 +27,25 @@ final class TransactionsListViewModel: ObservableObject {
             second: 59,
             of: now
         )!
-
+        
         let all = await service.fetch(from: start, to: end)
         let filtered = all.filter { $0.category.isIncome == direction }
         transactions = filtered
     }
     
-    func create(_ tx: Transaction) async {
+    func create(_ tx: Transaction, direction: Direction) async {
         await service.create(tx)
+        await loadToday(direction: direction)
+    }
+    
+    func update(_ tx: Transaction, direction: Direction) async {
+        await service.update(tx)
+        await loadToday(direction: direction)
+    }
+    
+    func delete(_ id: Int, direction: Direction) async {
+        await service.delete(id: id)
+        await loadToday(direction: direction)
     }
     
     var total: Decimal {

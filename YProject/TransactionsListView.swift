@@ -11,6 +11,9 @@ struct TransactionsListView: View {
     let direction: Direction
     @StateObject private var vm: TransactionsListViewModel
     @State private var isPresentingNew = false
+    @State private var editingTx: Transaction? = nil
+    
+    
     
     init(
         direction: Direction,
@@ -51,6 +54,10 @@ struct TransactionsListView: View {
                 
                 List(vm.transactions, id: \.id) { tx in
                     TransactionRow(transaction: tx)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            editingTx = tx
+                        }
                 }
                 .listStyle(.plain)
             }
@@ -84,13 +91,39 @@ struct TransactionsListView: View {
         .task {
             await vm.loadToday(direction: direction)
         }
-        .sheet(isPresented: $isPresentingNew) {
-            CreateTransactionView(direction: direction) { newTx in
-                Task {
-                    await vm.create(newTx)
-                    await vm.loadToday(direction: direction)
+        .sheet(isPresented: Binding<Bool>(
+            get: { isPresentingNew || editingTx != nil },
+            set: { newValue in
+                if !newValue {
+                    isPresentingNew = false
+                    editingTx = nil
                 }
-                isPresentingNew = false
+            }
+        )) {
+            if isPresentingNew {
+                CreateTransactionView(direction: direction) { newTx in
+                    Task {
+                        await vm.create(newTx, direction: direction)
+                        isPresentingNew = false
+                    }
+                }
+            } else if let tx = editingTx {
+                EditTransactionView(
+                    transaction: tx,
+                    direction: direction,
+                    onSave: { updatedTx in
+                        Task {
+                            await vm.update(updatedTx, direction: direction)
+                            editingTx = nil
+                        }
+                    },
+                    onDelete: { toDelete in
+                        Task {
+                            await vm.delete(toDelete.id, direction: direction)
+                            editingTx = nil
+                        }
+                    }
+                )
             }
         }
     }
