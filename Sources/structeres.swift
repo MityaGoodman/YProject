@@ -55,9 +55,9 @@ struct BankAccount {
 struct Transaction {
     var id: Int
     let account: BankAccount
-    let category: Category
+    var category: Category
     var amount: Decimal
-    let transactionDate: Date
+    var transactionDate: Date
     var comment: String
     let createdAt: Date
     var updatedAt: Date
@@ -301,3 +301,4 @@ extension Transaction {
         }
 }
 
+extension Transaction: Identifiable {}

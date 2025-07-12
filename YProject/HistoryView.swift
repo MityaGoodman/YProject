@@ -10,24 +10,25 @@ import SwiftUI
 struct HistoryView: View {
     let direction: Direction
     @StateObject private var vm: HistoryViewModel
+    @State private var showAnalysis = false
     
     init(
-      direction: Direction,
-      service: TransactionsService = MockTransactionsService(
-        cache: TransactionsFileCache(
-          fileURL: FileManager.default
-            .urls(for: .documentDirectory, in: .userDomainMask)
-            .first!
-            .appendingPathComponent("transactions.json")
+        direction: Direction,
+        service: TransactionsService = MockTransactionsService(
+            cache: TransactionsFileCache(
+                fileURL: FileManager.default
+                    .urls(for: .documentDirectory, in: .userDomainMask)
+                    .first!
+                    .appendingPathComponent("transactions.json")
+            )
         )
-      )
     ) {
         self.direction = direction
         _vm = StateObject(
-          wrappedValue: HistoryViewModel(
-            direction: direction,
-            service: service
-          )
+            wrappedValue: HistoryViewModel(
+                direction: direction,
+                service: service
+            )
         )
     }
     
@@ -61,14 +62,14 @@ struct HistoryView: View {
                 Text("Сумма")
                 Spacer()
                 Text(
-                  vm.total as NSNumber,
-                  formatter: currencyFormatter(code: vm.currencyCode)
+                    vm.total as NSNumber,
+                    formatter: currencyFormatter(code: vm.currencyCode)
                 )
             }
             .padding()
             .background(
-              RoundedRectangle(cornerRadius: 12)
-                .fill(Color(UIColor.secondarySystemBackground))
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(UIColor.secondarySystemBackground))
             )
             .padding(.horizontal)
             
@@ -78,6 +79,21 @@ struct HistoryView: View {
             .listStyle(.plain)
         }
         .navigationTitle("Моя история")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                // вместо кнопки, открывающей sheet:
+                NavigationLink {
+                    // вот куда пушим ваш UIKit-контроллер
+                    AnalysisViewControllerWrapper(
+                        start: vm.start,
+                        end: vm.end,
+                        transactions: vm.transactions
+                    )
+                } label: {
+                    Image(systemName: "doc.plaintext")
+                }
+            }
+        }
         .onChange(of: vm.start) { _ in Task { await vm.refresh() } }
         .onChange(of: vm.end)   { _ in Task { await vm.refresh() } }
     }
