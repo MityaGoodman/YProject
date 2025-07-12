@@ -5,6 +5,9 @@
 //  Created by Митя on 21.06.2025.
 //
 
+
+
+
 import SwiftUI
 
 struct HistoryView: View {
@@ -81,9 +84,7 @@ struct HistoryView: View {
         .navigationTitle("Моя история")
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                // вместо кнопки, открывающей sheet:
                 NavigationLink {
-                    // вот куда пушим ваш UIKit-контроллер
                     AnalysisViewControllerWrapper(
                         start: vm.start,
                         end: vm.end,
