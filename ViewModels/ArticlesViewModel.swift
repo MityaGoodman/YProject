@@ -11,11 +11,15 @@ import SwiftUI
 final class ArticlesViewModel: ObservableObject {
     @Published var searchText: String = ""
     @Published private(set) var allUsedCategories: [Category] = []
+    @Published var isLoading: Bool = false
+    @Published var errorMessage: String?
     
     private let txService: TransactionsService
+    private let categoriesService: CategoriesService
     
-    init(service: TransactionsService) {
+    init(service: TransactionsService, categoriesService: CategoriesService) {
         self.txService = service
+        self.categoriesService = categoriesService
     }
     
     func levenshteinDistance(_ a: String, _ b: String) -> Int {
@@ -49,13 +53,29 @@ final class ArticlesViewModel: ObservableObject {
     }
     
     func loadCategories() async {
-        let txs = await txService.fetch(
-            from: Date(timeIntervalSince1970: 0),
-            to: Date()
-        )
-        let usedIDs = Set(txs.map { $0.category.id })
-        let used = allCategories.filter { usedIDs.contains($0.id) }
-        allUsedCategories = used.sorted { $0.name < $1.name }
+        isLoading = true
+        errorMessage = nil
+        
+        do {
+            let txs = try await txService.fetch(
+                from: Date(timeIntervalSince1970: 0),
+                to: Date()
+            )
+            
+            let allCategories = await categoriesService.fetchAll()
+            
+            let usedIDs = Set(txs.map { $0.category.id })
+            let used = allCategories.filter { usedIDs.contains($0.id) }
+            allUsedCategories = used.sorted { $0.name < $1.name }
+            
+            print("📊 Загружено транзакций: \(txs.count)")
+            print("📋 Всего категорий: \(allCategories.count)")
+            print("📋 Используемых категорий: \(used.count)")
+        } catch {
+            errorMessage = "Ошибка загрузки статей: \(error.localizedDescription)"
+        }
+        
+        isLoading = false
     }
     
     var filteredCategories: [Category] {

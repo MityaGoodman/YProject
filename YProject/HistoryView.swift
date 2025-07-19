@@ -17,14 +17,7 @@ struct HistoryView: View {
     
     init(
         direction: Direction,
-        service: TransactionsService = MockTransactionsService(
-            cache: TransactionsFileCache(
-                fileURL: FileManager.default
-                    .urls(for: .documentDirectory, in: .userDomainMask)
-                    .first!
-                    .appendingPathComponent("transactions.json")
-            )
-        )
+        service: TransactionsService
     ) {
         self.direction = direction
         _vm = StateObject(
@@ -76,10 +69,17 @@ struct HistoryView: View {
             )
             .padding(.horizontal)
             
-            List(vm.transactions, id: \.id) { tx in
-                TransactionRow(transaction: tx)
+            if vm.isLoading {
+                Spacer()
+                ProgressView("Загрузка истории...")
+                    .progressViewStyle(CircularProgressViewStyle())
+                Spacer()
+            } else {
+                List(vm.transactions, id: \.id) { tx in
+                    TransactionRow(transaction: tx)
+                }
+                .listStyle(.plain)
             }
-            .listStyle(.plain)
         }
         .navigationTitle("Моя история")
         .toolbar {
@@ -97,6 +97,19 @@ struct HistoryView: View {
         }
         .onChange(of: vm.start) { _ in Task { await vm.refresh() } }
         .onChange(of: vm.end)   { _ in Task { await vm.refresh() } }
+        .alert("Ошибка", isPresented: Binding<Bool>(
+            get: { vm.errorMessage != nil },
+            set: { if !$0 { vm.errorMessage = nil } }
+        )) {
+            Button("OK") {
+                vm.errorMessage = nil
+            }
+        } message: {
+            if let errorMessage = vm.errorMessage {
+                Text(errorMessage)
+            }
+        }
+
     }
     
     private func currencyFormatter(code: String) -> NumberFormatter {

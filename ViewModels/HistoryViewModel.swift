@@ -12,6 +12,8 @@ final class HistoryViewModel: ObservableObject {
     @Published var transactions: [Transaction] = []
     @Published var start: Date
     @Published var end: Date
+    @Published var isLoading: Bool = false
+    @Published var errorMessage: String?
     
     private let service: TransactionsService
     private let direction: Direction
@@ -40,18 +42,27 @@ final class HistoryViewModel: ObservableObject {
     }
     
     func refresh() async {
-        if start > end {
-            start = calendar.startOfDay(for: end)
+        isLoading = true
+        errorMessage = nil
+        
+        do {
+            if start > end {
+                start = calendar.startOfDay(for: end)
+            }
+            
+            let adjustedEnd = calendar.date(
+                bySettingHour: 23, minute: 59, second: 59,
+                of: end
+            )!
+            
+            let all = try await service.fetch(from: calendar.startOfDay(for: start), to: adjustedEnd)
+            let filtered = all.filter { $0.category.isIncome == direction }
+            transactions = filtered
+        } catch {
+            errorMessage = "Ошибка загрузки истории: \(error.localizedDescription)"
         }
         
-        let adjustedEnd = calendar.date(
-            bySettingHour: 23, minute: 59, second: 59,
-            of: end
-        )!
-        
-        let all = await service.fetch(from: calendar.startOfDay(for: start), to: adjustedEnd)
-        let filtered = all.filter { $0.category.isIncome == direction }
-        transactions = filtered
+        isLoading = false
     }
     
     var total: Decimal {
