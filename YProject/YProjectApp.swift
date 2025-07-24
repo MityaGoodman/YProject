@@ -9,11 +9,17 @@ import SwiftUI
 
 @main
 struct YProjectApp: App {
+    @State private var splashFinished = false
+
     var body: some Scene {
         WindowGroup {
-            MyTabView()
-            //ContentView()
-            //    .accentColor(Color("Color"))
+            ZStack {
+                if splashFinished {
+                    MyTabView()
+                } else {
+                    SplashScreen(isFinished: $splashFinished)
+                }
+            }
         }
     }
 }

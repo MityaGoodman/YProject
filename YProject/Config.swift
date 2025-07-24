@@ -8,7 +8,7 @@
 import Foundation
 
 struct Config {
-    static let bearerToken = "YOUR_TOKEN"
+    static let bearerToken = "uBl7RL9TB8QJkmRIqMYu7VGR"
     static let baseURL = "https://shmr-finance.ru"
 }
 

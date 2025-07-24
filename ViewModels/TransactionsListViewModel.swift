@@ -14,6 +14,7 @@ final class TransactionsListViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
     @Published var isOffline: Bool = false
+    @Published var noDataMessage: String? = nil
     
     let service: TransactionsService
     let balanceManager: BalanceManager
@@ -29,6 +30,7 @@ final class TransactionsListViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
         isOffline = false
+        noDataMessage = nil
         
         do {
             let now = Date()
@@ -44,21 +46,30 @@ final class TransactionsListViewModel: ObservableObject {
             let all = try await service.fetch(from: start, to: end)
             let filtered = all.filter { $0.category.isIncome == direction }
             transactions = filtered
+            for tx in transactions {
+                print("[TransactionsList] id: \(tx.id), amount: \(tx.amount), date: \(tx.transactionDate)")
+            }
+            if filtered.isEmpty {
+                noDataMessage = "Нет транзакций за сегодня"
+            }
         } catch let networkError as NetworkError {
             switch networkError {
             case .offlineMode(let localData):
-                // Используем локальные данные и показываем офлайн режим
                 let filtered = localData.filter { $0.category.isIncome == direction }
                 transactions = filtered
                 isOffline = true
                 errorMessage = "Работа в офлайн режиме"
+                if filtered.isEmpty {
+                    noDataMessage = "Нет транзакций за сегодня (офлайн)"
+                }
+            case .networkError:
+                errorMessage = "Ошибка сети. Проверьте подключение к интернету."
+                isOffline = true
             default:
                 errorMessage = "Ошибка загрузки транзакций: \(networkError.localizedDescription)"
-                isOffline = true
             }
         } catch {
             errorMessage = "Ошибка загрузки транзакций: \(error.localizedDescription)"
-            isOffline = true
         }
         
         isLoading = false

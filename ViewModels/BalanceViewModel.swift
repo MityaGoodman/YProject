@@ -15,11 +15,12 @@ class BalanceViewModel: ObservableObject {
   @Published var isLoading: Bool = false
   @Published var errorMessage: String?
   @Published var isOffline: Bool = false
+  @Published var transactions: [Transaction] = []
   
   private let balanceManager: BalanceManager
   
-  init(balanceManager: BalanceManager) {
-    self.balanceManager = balanceManager
+  init(bankAccountsService: BankAccountsService, transactionsService: TransactionsService) {
+    self.balanceManager = BalanceManager(bankAccountsService: bankAccountsService, transactionsService: transactionsService)
     setupBindings()
   }
   
@@ -76,6 +77,15 @@ class BalanceViewModel: ObservableObject {
     }
     
     isLoading = false
+  }
+  
+  func loadTransactions() async {
+    do {
+      let all = await balanceManager.fetchAllTransactions()
+      self.transactions = all
+    } catch {
+      self.errorMessage = "Ошибка загрузки транзакций: \(error.localizedDescription)"
+    }
   }
   
   private var cancellables = Set<AnyCancellable>()

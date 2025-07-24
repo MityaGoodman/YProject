@@ -49,13 +49,46 @@ final class NetworkClient {
         self.session = URLSession.shared
     }
     
+    // MARK: - Retry Logic
+    private func retrying<T>(maxAttempts: Int = 2, delay: TimeInterval = 0.7, operation: @escaping () async throws -> T) async throws -> T {
+        var lastError: Error?
+        for attempt in 1...maxAttempts {
+            do {
+                return try await operation()
+            } catch let error as NetworkError {
+                // Retry only on network errors or 5xx http errors
+                let shouldRetry: Bool
+                switch error {
+                case .networkError:
+                    shouldRetry = true
+                case .httpError(let code) where (500...599).contains(code):
+                    shouldRetry = true
+                default:
+                    shouldRetry = false
+                }
+                if shouldRetry && attempt < maxAttempts {
+                    print("[Retry] Попытка \(attempt) не удалась, повтор через \(delay) сек...")
+                    try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                    continue
+                }
+                lastError = error
+                break
+            } catch {
+                lastError = error
+                break
+            }
+        }
+        throw lastError ?? NetworkError.networkError(NSError(domain: "Unknown", code: -1))
+    }
+    
     func request<U: Decodable>(
         endpoint: String,
         method: HTTPMethod = .GET,
         responseType: U.Type
     ) async throws -> U {
-        
-        return try await performRequestWithoutBody(endpoint: endpoint, method: method, responseType: responseType)
+        return try await retrying {
+            try await self.performRequestWithoutBody(endpoint: endpoint, method: method, responseType: responseType)
+        }
     }
     
     func request<T: Encodable, U: Decodable>(
@@ -64,8 +97,9 @@ final class NetworkClient {
         body: T,
         responseType: U.Type
     ) async throws -> U {
-        
-        return try await performRequestWithBody(endpoint: endpoint, method: method, body: body, responseType: responseType)
+        return try await retrying {
+            try await self.performRequestWithBody(endpoint: endpoint, method: method, body: body, responseType: responseType)
+        }
     }
     
     private func performRequestWithoutBody<U: Decodable>(

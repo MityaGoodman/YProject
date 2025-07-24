@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import PieChart
 
 private extension NumberFormatter {
     static func currency(code: String) -> NumberFormatter {
@@ -77,6 +78,8 @@ final class AnalysisViewController: UIViewController {
     private var sortControl = UISegmentedControl(items: ["Сумма", "Категории"])
     private var sortOption: SortOption = .byAmount
     
+    private let pieChartView = PieChartView()
+    
     init(start: Date, end: Date, transactions: [Transaction]) {
         self.startDate    = start
         self.endDate      = end
@@ -91,7 +94,18 @@ final class AnalysisViewController: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
         setupHeader()
+        setupPieChart()
         setupTable()
+        let filtered = originalTransactions.filter {
+            $0.transactionDate >= startDate && $0.transactionDate <= endDate
+        }
+        let sumsByCat = filtered.reduce(into: [Category: Decimal]()) { dict, tx in
+            dict[tx.category, default: 0] += tx.amount
+        }
+        let entities = sumsByCat.map { (cat, sum) in
+            Entity(value: sum, label: cat.name)
+        }.sorted { $0.value > $1.value }
+        pieChartView.entities = entities
     }
     
     private func setupHeader() {
@@ -225,6 +239,31 @@ final class AnalysisViewController: UIViewController {
         return container
     }
     
+    private func setupPieChart() {
+        view.addSubview(pieChartView)
+        pieChartView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            pieChartView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            pieChartView.topAnchor.constraint(equalTo: sortControl.bottomAnchor, constant: 24),
+            pieChartView.widthAnchor.constraint(equalToConstant: 220),
+            pieChartView.heightAnchor.constraint(equalToConstant: 220)
+        ])
+    }
+
+    private func updatePieChart() {
+        let filtered = originalTransactions.filter {
+            $0.transactionDate >= startDate && $0.transactionDate <= endDate
+        }
+        let sumsByCat = filtered.reduce(into: [Category: Decimal]()) { dict, tx in
+            dict[tx.category, default: 0] += tx.amount
+        }
+        let entities = sumsByCat.map { (cat, sum) in
+            Entity(value: sum, label: cat.name)
+        }.sorted { $0.value > $1.value }
+        // Анимация смены данных
+        pieChartView.setEntitiesAnimated(entities)
+    }
+    
     @objc private func dateChanged(_ sender: UIDatePicker) { // первая звездочка
         if sender === startPicker {
             startDate = sender.date
@@ -251,6 +290,7 @@ final class AnalysisViewController: UIViewController {
         ).string(from: total as NSNumber)
 
         tableView.reloadData()
+        updatePieChart()
     }
 
     
@@ -261,7 +301,7 @@ final class AnalysisViewController: UIViewController {
         view.addSubview(tableView)
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(
-                equalTo: sortControl.bottomAnchor, constant: 16 // вторая звездочка
+                equalTo: pieChartView.bottomAnchor, constant: 16
             ),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),

@@ -59,14 +59,23 @@ struct TransactionsListView: View {
                         .progressViewStyle(CircularProgressViewStyle())
                     Spacer()
                 } else {
-                    List(vm.transactions, id: \.id) { tx in
-                        TransactionRow(transaction: tx)
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                editingTx = tx
-                            }
+                    if let noData = vm.noDataMessage {
+                        Spacer()
+                        Text(noData)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding()
+                        Spacer()
+                    } else {
+                        List(vm.transactions, id: \.id) { tx in
+                            TransactionRow(transaction: tx)
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    editingTx = tx
+                                }
+                        }
+                        .listStyle(.plain)
                     }
-                    .listStyle(.plain)
                 }
             }
             
