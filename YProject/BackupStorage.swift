@@ -10,72 +10,33 @@ import SwiftData
 
 // MARK: - Backup Storage Implementation
 
+@MainActor
 final class SwiftDataBackupStorage: BackupStorage {
-    private let modelContainer: ModelContainer
-    private let modelContext: ModelContext
+    private let storage: GenericSwiftDataStorage<BackupEntryModel, BackupEntry>
     
     init() throws {
-        let schema = Schema([
-            TransactionModel.self,
-            BankAccountModel.self,
-            CategoryModel.self,
-            BackupEntryModel.self
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema)
-        self.modelContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
-        self.modelContext = ModelContext(modelContainer)
+        self.storage = GenericSwiftDataStorage<BackupEntryModel, BackupEntry>(
+            toDomain: { $0.toBackupEntry() ?? BackupEntry(id: 0, action: .create, data: "", timestamp: Date()) },
+            toModel: { BackupEntryModel(entry: $0) }
+        )
     }
     
     func addBackupEntry(_ entry: BackupEntry) async {
-        do {
-            let model = BackupEntryModel(entry: entry)
-            modelContext.insert(model)
-            try modelContext.save()
-        } catch {
-            print("Ошибка при добавлении записи в бекап: \(error)")
-        }
+        await storage.create(entry)
     }
     
     func getBackupEntries() async -> [BackupEntry] {
-        do {
-            let descriptor = FetchDescriptor<BackupEntryModel>()
-            let models = try modelContext.fetch(descriptor)
-            return models.compactMap { $0.toBackupEntry() }
-        } catch {
-            print("Ошибка при получении записей бекапа: \(error)")
-            return []
-        }
+        await storage.getAll()
     }
     
     func removeBackupEntry(id: Int) async {
-        do {
-            let entryId = id
-            let descriptor = FetchDescriptor<BackupEntryModel>(
-                predicate: #Predicate<BackupEntryModel> { model in
-                    model.id == entryId
-                }
-            )
-            let models = try modelContext.fetch(descriptor)
-            for model in models {
-                modelContext.delete(model)
-            }
-            try modelContext.save()
-        } catch {
-            print("Ошибка при удалении записи из бекапа: \(error)")
-        }
+        await storage.delete(predicate: #Predicate<BackupEntryModel> { model in
+            model.id == id
+        })
     }
     
     func clearBackup() async {
-        do {
-            let descriptor = FetchDescriptor<BackupEntryModel>()
-            let models = try modelContext.fetch(descriptor)
-            for model in models {
-                modelContext.delete(model)
-            }
-            try modelContext.save()
-        } catch {
-            print("Ошибка при очистке бекапа: \(error)")
-        }
+        await storage.saveAll([])
     }
 }
 

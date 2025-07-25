@@ -14,11 +14,13 @@ final class BalanceManager: ObservableObject {
     @Published var currency: String = "₽"
     
     private let bankAccountsService: BankAccountsService
+    private let transactionsService: TransactionsService
     private var cancellables = Set<AnyCancellable>()
     private var currentAccount: BankAccount?
     
-    init(bankAccountsService: BankAccountsService) {
+    init(bankAccountsService: BankAccountsService, transactionsService: TransactionsService) {
         self.bankAccountsService = bankAccountsService
+        self.transactionsService = transactionsService
     }
     
     func loadCurrentBalance() async throws {
@@ -103,6 +105,17 @@ final class BalanceManager: ObservableObject {
         
         Task {
             await bankAccountsService.updateAccount(account, balance: balance, currency: currency)
+        }
+    }
+    
+    func fetchAllTransactions() async -> [Transaction] {
+        do {
+            let from = Date(timeIntervalSince1970: 0)
+            let to = Date()
+            return try await transactionsService.fetch(from: from, to: to)
+        } catch {
+            print("Ошибка загрузки транзакций: \(error)")
+            return []
         }
     }
 }

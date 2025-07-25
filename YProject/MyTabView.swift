@@ -23,13 +23,13 @@ struct MyTabView: View {
         bankAccountsService: BankAccountsService,
         categoriesService: LocalCategoriesService
     ) -> (BalanceManager, TransactionsListViewModel, BalanceViewModel) {
-        let balanceManager = BalanceManager(bankAccountsService: bankAccountsService)
+        let balanceManager = BalanceManager(bankAccountsService: bankAccountsService, transactionsService: transactionsService)
         let transactionsViewModel = TransactionsListViewModel(
             service: transactionsService,
             balanceManager: balanceManager,
             categoriesService: categoriesService
         )
-        let balanceViewModel = BalanceViewModel(balanceManager: balanceManager)
+        let balanceViewModel = BalanceViewModel(bankAccountsService: bankAccountsService, transactionsService: transactionsService)
         return (balanceManager, transactionsViewModel, balanceViewModel)
     }
     
@@ -122,7 +122,7 @@ struct MyTabView: View {
                     Text("Доходы")
                 }
             NavigationStack {
-                BalanceSheet(balanceManager: balanceManager)
+                BalanceSheet(balanceViewModel: balanceViewModel)
             }
                 .tabItem {
                     Image(systemName: "banknote.fill")
